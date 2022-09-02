@@ -46,9 +46,12 @@ def get_STL_profile(path):
             Y.append(points[i][j][1])
             Z.append(points[i][j][2])
 
-    X = np.array(X)
-    Z = np.array(Z)
-    plot_3d_points(X, Y, Z)
+    X = np.around(np.array(X),3)
+    Y = np.around(np.array(Y),3)
+    Z = np.around(np.array(Z),3)
+
+
+    #plot_3d_points(X, Y, Z)
     y_set = set(Y)
     y_sorted = list(y_set)
     y_sorted.sort()
@@ -60,7 +63,13 @@ def get_STL_profile(path):
             if Y[j] == y_sorted[i]:
                 if x_max[i] < X[j]:
                     x_max[i] = X[j]
-
+    # close boundary
+    x_max.append(0)
+    y_sorted.append(max(y_sorted))
+    x_max.append(0)
+    y_sorted.append(min(y_sorted))
+    x_max = [0] + x_max
+    y_sorted = [min(y_sorted)] + y_sorted
     return x_max, y_sorted
 
 
