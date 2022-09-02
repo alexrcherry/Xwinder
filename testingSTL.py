@@ -12,6 +12,7 @@ def plot_3d_points(X, Y, Z):
     plt.show()
     return
 
+
 def plot_STL(path):
     your_mesh = mesh.Mesh.from_file(path)
     # Create a new plot
@@ -30,7 +31,7 @@ def plot_STL(path):
     return
 
 
-def get_STL_profile(path, tolerance):
+def get_STL_profile(path):
     your_mesh = mesh.Mesh.from_file(path)
     volume, cog, inertia = your_mesh.get_mass_properties()
     points = your_mesh.vectors
@@ -45,14 +46,13 @@ def get_STL_profile(path, tolerance):
             Y.append(points[i][j][1])
             Z.append(points[i][j][2])
 
-    X = np.array(X)-((max(X)-min(X))/2)
-    Y = np.array(Y)
+    X = np.array(X)
     Z = np.array(Z)
-
+    plot_3d_points(X, Y, Z)
     y_set = set(Y)
     y_sorted = list(y_set)
     y_sorted.sort()
-
+    print(len(y_sorted))
     x_max = [0]*len(y_sorted)
 
     for i in range(len(y_sorted)):
@@ -60,17 +60,14 @@ def get_STL_profile(path, tolerance):
             if Y[j] == y_sorted[i]:
                 if x_max[i] < X[j]:
                     x_max[i] = X[j]
-    annotations = [0]*len(x_max)
-    for i in range(len(x_max)):
-        annotations[i] = str(round(x_max[i]))+" "+str(round(y_sorted[i]))
 
     return x_max, y_sorted
 
 
-X, Y = get_STL_profile('Solidworks.STL', .001)
+X, Y = get_STL_profile('Test1.stl')
 
 fig, ax = plt.subplots()
-ax.scatter(X, Y)
+ax.plot(X, Y)
 # set aspect ratio to 1
 ratio = max(Y)/max(X)
 x_left, x_right = ax.get_xlim()
