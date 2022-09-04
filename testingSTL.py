@@ -46,12 +46,11 @@ def get_STL_profile(path):
             Y.append(points[i][j][1])
             Z.append(points[i][j][2])
 
-    X = np.around(np.array(X),3)
-    Y = np.around(np.array(Y),3)
-    Z = np.around(np.array(Z),3)
+    X = np.around(np.array(X), 3)
+    Y = np.around(np.array(Y), 3)
+    Z = np.around(np.array(Z), 3)
 
-
-    #plot_3d_points(X, Y, Z)
+    # plot_3d_points(X, Y, Z)
     y_set = set(Y)
     y_sorted = list(y_set)
     y_sorted.sort()
@@ -73,7 +72,7 @@ def get_STL_profile(path):
     return x_max, y_sorted
 
 
-X, Y = get_STL_profile('Test1.stl')
+X, Y = get_STL_profile('Body1.obj')
 
 fig, ax = plt.subplots()
 ax.plot(X, Y)
