@@ -1,4 +1,5 @@
 from gettext import bind_textdomain_codeset
+from textwrap import fill
 from time import thread_time
 import potpourri3d as pp3d
 from mpl_toolkits import mplot3d
@@ -60,23 +61,23 @@ def get_dims(V):
 
 
 def get_values(lobes, radius, fiber_width):
-    alpha = (180.00*(lobes-2))/lobes
-    beta = alpha + (180*fiber_width)/(math.pi*radius)
+    alpha = 360.0/lobes
+    beta = (180*fiber_width)/(math.pi*radius)
     return alpha, beta
 
 
 def is_close(a, b):
-    if (b < a) & ((b+1) >= a):
+    if (b < a) & ((b+0.7) >= a):
         return 1
-    if (b > a) & ((b-1) <= a):
+    if (b > a) & ((b-0.7) <= a):
         return 1
 
     return 0
 
 
 def find_index(V, x, y, z):
-    print('index search for')
-    print(x, y, z)
+    # print('index search for')
+    # print(x, y, z)
     V = np.around(V, 1)
     x = np.around(x, 1)
     y = np.around(y, 1)
@@ -86,7 +87,7 @@ def find_index(V, x, y, z):
             if (is_close(V[i][1], y)):
                 # print("close:", [V[i][0],V[i][1],V[i][2]])
                 if (is_close(V[i][0], x)):
-                    print("FOUND: ", [V[i][0], V[i][1], V[i][2]])
+                    # print("FOUND: ", [V[i][0], V[i][1], V[i][2]])
                     return i
 
     return "point not found"
@@ -95,7 +96,8 @@ def find_index(V, x, y, z):
 def step(path, lobes, fiber_width, iterations):
     # load mesh
     V, F = pp3d.read_mesh(path)
-    print('mesh loaded')
+    path_solver = pp3d.EdgeFlipGeodesicSolver(V, F)
+    print('mesh and solver loaded')
     r1, r2, z_min, z_max = get_dims(V)
     h = z_max - z_min
     # calc angles
@@ -106,59 +108,94 @@ def step(path, lobes, fiber_width, iterations):
         # Geodesic 1
         if i == 0:
             theta_start = 0
-        x_start, y_start = cart_coords(r1, theta_start)
-        z_start = 0
+            r_start = r1
+            z_start = 0
+            x_start, y_start = cart_coords(r_start, theta_start)
+        else:
+            x_start, y_start, z_start = x_end, y_end, z_end
+            theta_start = theta_end
 
-
-        x_end, y_end = cart_coords(r2, (theta_start)+(beta/2))
+        theta_end = theta_start+alpha
+        r_end = r2
         z_end = h
+        x_end, y_end = cart_coords(r_end, theta_end)
 
         index_start = find_index(V, x_start, y_start, z_start)
         index_end = find_index(V, x_end, y_end, z_end)
 
-        path_solver = pp3d.EdgeFlipGeodesicSolver(V, F)
         path1 = path_solver.find_geodesic_path(index_start, index_end)
         if i == 0:
             path = path1
         else:
             path = np.append(path, path1, axis=0)
+        print("start 1:", [r_start, theta_start, z_start])
+        print("end 1:", [r_end, theta_end, z_end])
 
         # linear path 1
         x_start, y_start, z_start = x_end, y_end, z_end
+        theta_start = theta_end
 
-        x_end, y_end = cart_coords(r2, theta_start+(beta/2)+alpha*(1+i))
+        r_end = r2
+        theta_end = theta_start + beta/2 + alpha
         z_end = h
+        x_end, y_end = cart_coords(r_end, theta_end)
 
         path2 = np.array([[x_start, y_start, z_start], [x_end, y_end, z_end]])
         path = np.append(path, path2, axis=0)
+        print("start 2:", [r_start, theta_start, z_start])
+        print("end 2:", [r_end, theta_end, z_end])
         # Geodesic 2
         x_start, y_start, z_start = x_end, y_end, z_end
-        x_end, y_end = cart_coords(r1, theta_start+(beta/2)+2*alpha*(1+i))
+        theta_start = theta_end
+
+        r_end = r1
+        theta_end = theta_start + alpha
         z_end = 0
+        x_end, y_end = cart_coords(r1, theta_start+(beta/2)+2*alpha*(1+i))
+
         index_start = find_index(V, x_start, y_start, z_start)
         index_end = find_index(V, x_end, y_end, z_end)
+
         path3 = path_solver.find_geodesic_path(index_start, index_end)
         path = np.append(path, path3, axis=0)
+        print("start 3:", [r_start, theta_start, z_start])
+        print("end 3:", [r_end, theta_end, z_end])
         # linear path 2
-        x_start, y_start, z_start = [x_end, y_end, z_end]
-        x_end, y_end = cart_coords(r1, theta_start+(beta/2)+3*alpha*(1+i))
-        theta_start = theta_start+(beta/2)+3*alpha*(1+i)
+        x_start, y_start, z_start = x_end, y_end, z_end
+        theta_start = theta_end
+
+        r_end = r1
+        theta_end = theta_start + beta/2 + alpha
         z_end = 0
+        x_end, y_end = cart_coords(r1, theta_start+(beta/2)+3*alpha*(1+i))
+
         path4 = np.array([[x_start, y_start, z_start], [x_end, y_end, z_end]])
         path = np.append(path, path4, axis=0)
-
+        print("start 4:", [r_start, theta_start, z_start])
+        print("end 4:", [r_end, theta_end, z_end])
     return path
 
 
 width = 4
-lobes = 6
+lobes = 3
 
-path1 = step('Body3.obj', lobes, width, 5)
+path1 = step('Body3.obj', lobes, width, 1)
 # x0, y0, z0 = V[:, 0], V[:, 1], V[:, 2]
 x1, y1, z1 = path1[:, 0], path1[:, 1], path1[:, 2]
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
-# ax.scatter(x0[::100], y0[::100], z0[::100], alpha=.1)
-ax.plot(x1, y1, z1)
+# fig = plt.figure()
+# ax = fig.add_subplot(projection='3d')
+
+# # ax.scatter(x0[::100], y0[::100], z0[::100], alpha=.1)
+# ax.plot(x1, y1, z1)
+# plt.show()
+
+circle1 = plt.Circle((0, 0), 25, color='g', fill=False)
+circle2 = plt.Circle((0, 0), 50, color='r', fill=False)
+
+ax = plt.gca()
+ax.cla() # clear things for fresh plot
+ax.add_patch(circle1)
+ax.add_patch(circle2)
+ax.plot(x1, -1*y1)
 plt.show()
