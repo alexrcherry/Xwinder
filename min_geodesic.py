@@ -44,6 +44,8 @@ def get_dims(V):
     Y_max = []
     X_min = []
     Y_min = []
+    X_mid = []
+    Y_mid= []
 
     for i in range(len(X)):
         if Z[i] == Z_max:
@@ -54,10 +56,14 @@ def get_dims(V):
             X_min.append(X[i])
             Y_min.append(Y[i])
             index_min.append(i)
+        if (Z[i] == (Z_max - Z_min)/2):
+            X_mid.append(X[i])
+            Y_mid.append(Y[i])
+
     r1 = round(max(X_min), 3)
     r2 = round(max(X_max), 3)
-
-    return r1, r2, Z_min, Z_max
+    r_mid = round(max(X_mid), 3)
+    return r1, r2, r_mid, Z_min, Z_max
 
 
 def get_values(lobes, radius, fiber_width):
@@ -98,7 +104,7 @@ def step(path, lobes, fiber_width, iterations):
     V, F = pp3d.read_mesh(path)
     path_solver = pp3d.EdgeFlipGeodesicSolver(V, F)
     print('mesh and solver loaded')
-    r1, r2, z_min, z_max = get_dims(V)
+    r1, r2, r_mid, z_min, z_max = get_dims(V)
     h = z_max - z_min
     # calc angles
     alpha, beta = get_values(lobes, r1, fiber_width)
@@ -144,7 +150,7 @@ def step(path, lobes, fiber_width, iterations):
         path = np.append(path, path2, axis=0)
         print("start 2:", [r_start, theta_start, z_start])
         print("end 2:", [r_end, theta_end, z_end])
-        # Geodesic 2
+        # Geodesic 2 needs to not be shortest path
         x_start, y_start, z_start = x_end, y_end, z_end
         theta_start = theta_end
 
