@@ -6,6 +6,7 @@ from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import time
 
 # V, F = pp3d.read_mesh('Body3.obj')
 # shares precomputation for repeated solves
@@ -78,9 +79,10 @@ def is_close(a, b):
     return 0
 
 
-def find_index(V, x, y, z):
+def find_index_top(V, x, y, z):
     # print('index search for')
     # print(x, y, z)
+    start_time = time.time()
     V = np.around(V, 1)
     x = np.around(x, 1)
     y = np.around(y, 1)
@@ -90,7 +92,26 @@ def find_index(V, x, y, z):
             if (is_close(V[i][1], y)):
                 # print("close:", [V[i][0],V[i][1],V[i][2]])
                 if (is_close(V[i][0], x)):
-                    # print("FOUND: ", [V[i][0], V[i][1], V[i][2]])
+                    print(time.time()-start_time, 'Z:', V[i][2])
+                    return i
+
+    return "point not found"
+
+
+def find_index_bottom(V, x, y, z):
+    # print('index search for')
+    # print(x, y, z)
+    start_time = time.time()
+    V = np.around(V, 1)
+    x = np.around(x, 1)
+    y = np.around(y, 1)
+    z = np.around(z, 1)
+    for i in range(len(V)-1, 0, -1):
+        if (is_close(V[i][2], z)):
+            if (is_close(V[i][1], y)):
+                # print("close:", [V[i][0],V[i][1],V[i][2]])
+                if (is_close(V[i][0], x)):
+                    print(time.time()-start_time, 'Z:', V[i][2])
                     return i
 
     return "point not found"
@@ -126,16 +147,16 @@ def step(path, lobes, fiber_width):
         z_end = h
         x_end, y_end = cart_coords(r_end, theta_end)
 
-        index_start = find_index(V, x_start, y_start, z_start)
-        index_end = find_index(V, x_end, y_end, z_end)
+        index_start = find_index_bottom(V, x_start, y_start, z_start)
+        index_end = find_index_top(V, x_end, y_end, z_end)
 
         path1 = path_solver.find_geodesic_path(index_start, index_end)
         if i == 0:
             path = path1
         else:
             path = np.append(path, path1, axis=0)
-        print("start 1:", [r_start, theta_start, z_start])
-        print("end 1:", [r_end, theta_end, z_end])
+        # print("start 1:", [r_start, theta_start, z_start])
+        # print("end 1:", [r_end, theta_end, z_end])
 
         # linear path 1
         x_start, y_start, z_start = x_end, y_end, z_end
@@ -148,8 +169,8 @@ def step(path, lobes, fiber_width):
 
         path2 = np.array([[x_start, y_start, z_start], [x_end, y_end, z_end]])
         path = np.append(path, path2, axis=0)
-        print("start 2:", [r_start, theta_start, z_start])
-        print("end 2:", [r_end, theta_end, z_end])
+        # print("start 2:", [r_start, theta_start, z_start])
+        # print("end 2:", [r_end, theta_end, z_end])
         # Geodesic 2 needs
 
         x_start, y_start, z_start = x_end, y_end, z_end
@@ -160,13 +181,13 @@ def step(path, lobes, fiber_width):
         z_end = 0
         x_end, y_end = cart_coords(r_end, theta_end)
 
-        index_start = find_index(V, x_start, y_start, z_start)
-        index_end = find_index(V, x_end, y_end, z_end)
+        index_start = find_index_top(V, x_start, y_start, z_start)
+        index_end = find_index_bottom(V, x_end, y_end, z_end)
 
         path3 = path_solver.find_geodesic_path(index_start, index_end)
         path = np.append(path, path3, axis=0)
-        print("start 3:", [r_start, theta_start, z_start])
-        print("end 3:", [r_end, theta_end, z_end])
+        # print("start 3:", [r_start, theta_start, z_start])
+        # print("end 3:", [r_end, theta_end, z_end])
         # linear path 2
         x_start, y_start, z_start = x_end, y_end, z_end
         theta_start = theta_end
@@ -178,9 +199,10 @@ def step(path, lobes, fiber_width):
 
         path4 = np.array([[x_start, y_start, z_start], [x_end, y_end, z_end]])
         path = np.append(path, path4, axis=0)
-        print("start 4:", [r_start, theta_start, z_start])
-        print("end 4:", [r_end, theta_end, z_end])
+        # print("start 4:", [r_start, theta_start, z_start])
+        # print("end 4:", [r_end, theta_end, z_end])
     return path
+
 
 
 width = 8
