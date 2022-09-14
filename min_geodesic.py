@@ -71,7 +71,7 @@ def get_values(lobes, radius, fiber_width):
 
 
 def is_close(a, b):
-    if (b < a) & ((b+0.7) >= a):
+    if (b < a) & ((b+0.7 >= a)):
         return 1
     if (b > a) & ((b-0.7) <= a):
         return 1
@@ -92,7 +92,7 @@ def find_index_top(V, x, y, z):
             if (is_close(V[i][1], y)):
                 # print("close:", [V[i][0],V[i][1],V[i][2]])
                 if (is_close(V[i][0], x)):
-                    print(time.time()-start_time, 'Z:', V[i][2])
+                    print('top:', time.time()-start_time, 'Z:', V[i][2])
                     return i
 
     return "point not found"
@@ -111,10 +111,27 @@ def find_index_bottom(V, x, y, z):
             if (is_close(V[i][1], y)):
                 # print("close:", [V[i][0],V[i][1],V[i][2]])
                 if (is_close(V[i][0], x)):
-                    print(time.time()-start_time, 'Z:', V[i][2])
+                    print('bottom:', time.time()-start_time, 'Z:', V[i][2])
                     return i
 
     return "point not found"
+
+
+def get_extremes(V, top, bottom): #dont find geodesic each time, instead find best geodesic and then do rotation on that best geodesic
+    top_list = []
+    top_index = []
+    bottom_list =[]
+    bottom_index = []
+    for i in range(len(V)):
+        if is_close(V[i][2], top):
+            top_list.append(V[i])
+            top_index.append(i)
+        if is_close(V[i][2], bottom):
+            bottom_list.append(V[i])
+            bottom_index.append(i)
+    print('top:', len(top_list))
+    print('bottom', len(bottom_list))
+    return top_list, bottom_list, top_index, bottom_index
 
 
 def step(path, lobes, fiber_width):
@@ -123,6 +140,7 @@ def step(path, lobes, fiber_width):
     path_solver = pp3d.EdgeFlipGeodesicSolver(V, F)
     print('mesh and solver loaded')
     r1, r2, z_min, z_max = get_dims(V)
+    V_top, V_bottom, top_index, bottom_index = get_extremes(V, z_max, z_min)
     h = z_max - z_min
     # calc angles
     alpha, beta = get_values(lobes, r1, fiber_width)
@@ -147,8 +165,8 @@ def step(path, lobes, fiber_width):
         z_end = h
         x_end, y_end = cart_coords(r_end, theta_end)
 
-        index_start = find_index_bottom(V, x_start, y_start, z_start)
-        index_end = find_index_top(V, x_end, y_end, z_end)
+        index_start = bottom_index[find_index_bottom(V_bottom, x_start, y_start, z_start)]
+        index_end = top_index[find_index_top(V_top, x_end, y_end, z_end)]
 
         path1 = path_solver.find_geodesic_path(index_start, index_end)
         if i == 0:
@@ -181,8 +199,8 @@ def step(path, lobes, fiber_width):
         z_end = 0
         x_end, y_end = cart_coords(r_end, theta_end)
 
-        index_start = find_index_top(V, x_start, y_start, z_start)
-        index_end = find_index_bottom(V, x_end, y_end, z_end)
+        index_start = top_index[find_index_top(V_top, x_start, y_start, z_start)]
+        index_end = bottom_index[find_index_bottom(V_bottom, x_end, y_end, z_end)]
 
         path3 = path_solver.find_geodesic_path(index_start, index_end)
         path = np.append(path, path3, axis=0)
@@ -205,7 +223,7 @@ def step(path, lobes, fiber_width):
 
 
 
-width = 8
+width = 4
 lobes = 3
 
 path1 = step('Body3.obj', lobes, width)
