@@ -116,8 +116,20 @@ def find_index_bottom(V, x, y, z):
 
     return "point not found"
 
+def get_best_geodesic(path, lobes, fiber_width):
+    V, F = pp3d.read_mesh(path)
+    path_solver = pp3d.EdgeFlipGeodesicSolver(V, F)
+    print('mesh and solver loaded')
+    r1, r2, z_min, z_max = get_dims(V)
+    V_top, V_bottom, top_index, bottom_index = get_extremes(V, z_max, z_min)
+    h = z_max - z_min
+    # calc angles
+    alpha, beta = get_values(lobes, r1, fiber_width)
 
-def get_extremes(V, top, bottom): #dont find geodesic each time, instead find best geodesic and then do rotation on that best geodesic
+
+
+
+def get_extremes(V, top, bottom):  # dont find geodesic each time, instead find best geodesic and then do rotation on that best geodesic
     top_list = []
     top_index = []
     bottom_list =[]
@@ -220,7 +232,6 @@ def step(path, lobes, fiber_width):
         # print("start 4:", [r_start, theta_start, z_start])
         # print("end 4:", [r_end, theta_end, z_end])
     return path
-
 
 
 width = 4
