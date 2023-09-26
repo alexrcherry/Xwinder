@@ -25,7 +25,7 @@ class winder:
         self.carriage.setDeviceSerialNumber(carriage_SN)
         self.carriage.openWaitForAttachment(5000)
         self.carriage.setAcceleration(50000)
-        self.carriage.setRescaleFactor(carriage_factor)
+        self.head.setRescaleFactor(head_factor)
 
         self.head = Stepper()
         self.head.setDeviceSerialNumber(head_SN)
@@ -278,3 +278,41 @@ class winder:
         self.head.close()
         self.mandrel.close()
         self.carriage.close()
+
+
+    def calibrate(self, Mand_Carr_Head = [0, 1, 0]):
+        RescaleFactors = np.array[.0625*1.8, .0625*1.8, .0625*1.8]
+        Mand_Carr_Head = np.array[Mand_Carr_Head]
+        masked_rescale_factors = RescaleFactors*Mand_Carr_Head
+
+        if Mand_Carr_Head[0] == 1:
+            self.mandrelRescaleFactor = .0625*1.8
+            self.mandrel.setTargetPosition(100)
+
+            while (self.mandrel.getIsMoving()):
+                    time.sleep(.5)
+
+            time.sleep(5)
+
+        if Mand_Carr_Head[1] == 1:
+            self.carriageRescaleFactor = .0625*1.8 #assuming stepper is 1.8 deg/s this makes it so one unit is 1 deg
+            self.carriage.setTargetPosition(100)
+
+            while (self.carriage.getIsMoving()):
+                    time.sleep(.5)
+
+            time.sleep(5)
+
+        if Mand_Carr_Head[2] == 1:
+            self.headRescaleFactor = .0625*1.8
+            self.head.setTargetPosition(100)
+
+            while (self.head.getIsMoving()):
+                    time.sleep(.5)
+
+            time.sleep(5)
+
+
+
+
+
