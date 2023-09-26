@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>580</width>
-    <height>927</height>
+    <width>352</width>
+    <height>682</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -20,8 +20,8 @@
    <widget class="QWidget" name="verticalLayoutWidget_3">
     <property name="geometry">
      <rect>
-      <x>80</x>
-      <y>40</y>
+      <x>40</x>
+      <y>50</y>
       <width>258</width>
       <height>511</height>
      </rect>
@@ -197,7 +197,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>580</width>
+     <width>352</width>
      <height>31</height>
     </rect>
    </property>
