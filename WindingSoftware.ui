@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>570</width>
-    <height>871</height>
+    <width>580</width>
+    <height>927</height>
    </rect>
   </property>
   <property name="acceptDrops">
@@ -22,8 +22,8 @@
      <rect>
       <x>80</x>
       <y>40</y>
-      <width>401</width>
-      <height>741</height>
+      <width>258</width>
+      <height>511</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -64,7 +64,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_Radius"/>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_Radius">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="value">
+            <double>1.250000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -78,7 +85,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_Length"/>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_Length">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="value">
+            <double>10.000000000000000</double>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -93,6 +107,9 @@
      </item>
      <item>
       <widget class="QListWidget" name="listWidget">
+       <property name="dragDropMode">
+        <enum>QAbstractItemView::InternalMove</enum>
+       </property>
        <item>
         <property name="text">
          <string>Helical</string>
@@ -180,7 +197,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>570</width>
+     <width>580</width>
      <height>31</height>
     </rect>
    </property>

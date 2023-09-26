@@ -5,7 +5,12 @@ import time
 import numpy as np
 
 class winder:
-    def __init__(self,
+    def __init__(self):
+
+        self.position = 0 #home position is zero, far end of part is one
+
+
+    def connect(self,
                  mandrel_SN=615813, mandrel_factor=1/60.444,
                  carriage_SN=615519, carriage_factor=-1/3624,
                  head_SN=616004, head_factor=9/1040,):
@@ -28,10 +33,9 @@ class winder:
         self.head.setAcceleration(4800)
         self.head.setRescaleFactor(head_factor)
 
-        self.position = 0 #home position is zero, far end of part is one
 
     def parameter_calculation(self,
-                              alpha_desired = 55,
+                              alpha_desired:float = 55,
                               radius = 1.985/2,
                               fiber_thickness_hoop = .152,
                               linear_velocity_hoop = .2,
@@ -40,8 +44,8 @@ class winder:
                               linear_velocity_helical=1.6
                               ):
         self.travel_distance = travel_distance
-        self.linear_velocity_hoop = linear_velocity
-        t = fiber_thickness/linear_velocity_hoop
+        self.linear_velocity_hoop = linear_velocity_hoop
+        t = fiber_thickness_hoop/linear_velocity_hoop
         self.angular_velocity = 360/t
 
         #helical
@@ -53,6 +57,7 @@ class winder:
         offset_fudge_factor = 1# percent multiplier for offset angle
         head_angle_length = .25 #in length that the head turns during
 
+        r = radius
         B = fiber_thickenss_helical
         D = 2*r
         possible_alphas = []
@@ -66,6 +71,8 @@ class winder:
 
 
         alpha = calc_alpha(N-1, B, D)
+        print('alpha', alpha)
+        print('N:', N)
         self.alpha = alpha
         self.N = N
 
@@ -73,12 +80,13 @@ class winder:
         self.angular_offset = width1*(360/(2*np.pi*r))*offset_fudge_factor
 
         self.W_mand = linear_velocity_helical*np.tan(np.radians(alpha))*(360/(2*np.pi*r))
-        self.W_head = (90-alpha)/(360/W_mand)*1.5
+        self.W_head = (90-alpha)/(360/self.W_mand)*1.5
 
         self.T = travel_distance/linear_velocity_helical
-        self.Total_angle = W_mand*T
+        self.Total_angle = self.W_mand*self.T
         self.head_F = -(90-alpha+15)
         self.head_B = 90-alpha+15
+
 
     def helical(self):
         if self.position == 0:
@@ -210,9 +218,11 @@ class winder:
 
             self.position = 0
 
+
     def part_size(radius, length):
         self.radius = radius
         self. length = length
+
 
     def hoop(self):
         if self.position == 0:
@@ -244,21 +254,25 @@ class winder:
 
             self.position = 0
 
+
     def tape_winding(self):
         self.mandrel.setTargetPosition(200000)
         self.mandrel.setEngaged(True)
 
-    def lock_motors(self):
+
+    def engage_motors(self):
         val = 1
         self.mandrel.setEngaged(val)
         self.head.setEngaged(val)
         self.mandrel.setEngaged(val)
 
-    def unlock_motors(self):
+
+    def disengage_motors(self):
         val = 0
         self.mandrel.setEngaged(val)
         self.head.setEngaged(val)
         self.mandrel.setEngaged(val)
+
 
     def close_connection(self):
         self.head.close()
