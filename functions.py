@@ -19,13 +19,13 @@ class winder:
         self.mandrel.setDeviceSerialNumber(mandrel_SN)
         self.mandrel.openWaitForAttachment(5000)
         self.mandrel.setAcceleration(80000)
-        self.mandrel.setRescaleFactor(mandreal_factor) #convert so set target is in degrees
+        self.mandrel.setRescaleFactor(mandrel_factor) #convert so set target is in degrees
 
         self.carriage = Stepper()
         self.carriage.setDeviceSerialNumber(carriage_SN)
         self.carriage.openWaitForAttachment(5000)
         self.carriage.setAcceleration(50000)
-        self.head.setRescaleFactor(head_factor)
+        self.carriage.setRescaleFactor(head_factor)
 
         self.head = Stepper()
         self.head.setDeviceSerialNumber(head_SN)
@@ -40,13 +40,15 @@ class winder:
                               fiber_thickness_hoop = .152,
                               linear_velocity_hoop = .2,
                               travel_distance = 15.5,
-                              fiber_thickenss_helical = .16,
+                              fiber_thickness_helical = .16,
                               linear_velocity_helical=1.6
                               ):
         self.travel_distance = travel_distance
         self.linear_velocity_hoop = linear_velocity_hoop
         t = fiber_thickness_hoop/linear_velocity_hoop
         self.angular_velocity = 360/t
+        self.fiber_thickness_hoop = fiber_thickness_hoop
+        self.fiber_thickness_helical = fiber_thickness_helical
 
         #helical
         def calc_alpha(N, B, D):
@@ -58,7 +60,7 @@ class winder:
         head_angle_length = .25 #in length that the head turns during
 
         r = radius
-        B = fiber_thickenss_helical
+        B = fiber_thickness_helical
         D = 2*r
         possible_alphas = []
         alpha_error = 0
@@ -76,7 +78,7 @@ class winder:
         self.alpha = alpha
         self.N = N
 
-        width1 = fiber_thickenss_helical/np.cos(np.radians(alpha))
+        width1 = fiber_thickness_helical/np.cos(np.radians(alpha))
         self.angular_offset = width1*(360/(2*np.pi*r))*offset_fudge_factor
 
         self.W_mand = linear_velocity_helical*np.tan(np.radians(alpha))*(360/(2*np.pi*r))

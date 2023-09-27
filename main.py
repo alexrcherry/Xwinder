@@ -1,37 +1,3 @@
-# from functions import winder
-# import time
-# import keyboard
-
-# Xwinder = winder()
-
-# Xwinder.parameter_calculation()
-
-# Xwinder.hoop()
-# Xwinder.helical()
-# Xwinder.hoop()
-# Xwinder.helical()
-
-# print('-------Winding Done!!!-------')
-# print('press t to start tape winding')
-# print('press esc to start tape winding')
-
-
-
-# def t():
-#     Xwinder.tape_winding()
-
-# def exit():
-#     Xwinder.close_connection()
-#     quit()
-
-# keyboard.add_hotkey('t', t)
-# keyboard.add_hotkey('esc', exit)
-
-# while True:
-#     mywait()
-
-
-
 from PyQt5 import QtWidgets, uic
 import sys
 from functions import winder
@@ -58,6 +24,9 @@ class Ui(QtWidgets.QMainWindow):
         self.pushButton_Stop.clicked.connect(self.StopFunc)
         self.pushButton_Pause.clicked.connect(self.StopFunc)
         self.pushButton_Resume.clicked.connect(self.ResumeFunc)
+        self.pushButton_CarriagePositive.clicked.connect(self.CarriagePositiveFunc)
+        self.pushButton_CarriagePositive.autoRepeat()
+        self.pushButton_CarriagePositive.setAutoRepeatInterval(500)
 
         self.running = False
 
@@ -142,6 +111,9 @@ class Ui(QtWidgets.QMainWindow):
         print('stop')
         self.Xwinder.engage_motors()
 
+
+    def CarriagePositiveFunc(self):
+        print('moving')
 
 app = QtWidgets.QApplication(sys.argv)
 window = Ui()
