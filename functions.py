@@ -8,7 +8,11 @@ class winder:
     def __init__(self):
 
         self.position = 0 #home position is zero, far end of part is one
-
+        #place to store stuff
+        self.Mv100degs_Total = 0
+        self.RF_Mandrel = .1125
+        self.RF_Carriage = .1125
+        self.RF_Head = .1125
 
     def connect(self,
                  mandrel_SN=615813, mandrel_factor=1/60.444,
