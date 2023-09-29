@@ -9,10 +9,12 @@ class winder:
 
         self.position = 0 #home position is zero, far end of part is one
         #place to store stuff
-        self.Mv100degs_Total = 0
+        self.Mv100degs = 0
         self.RF_Mandrel = .1125
         self.RF_Carriage = .1125
         self.RF_Head = .1125
+
+
 
     def connect(self,
                  mandrel_SN=615813, mandrel_factor=1/60.444,
@@ -20,37 +22,43 @@ class winder:
                  head_SN=616004, head_factor=9/1040,):
 
         self.mandrel = Stepper()
+        self.carriage = Stepper()
+        self.head = Stepper()
         self.mandrel.setDeviceSerialNumber(mandrel_SN)
         self.mandrel.openWaitForAttachment(5000)
-        self.mandrel.setAcceleration(80000)
+        self.mandrel.setAcceleration(10000)
         self.mandrel.setRescaleFactor(mandrel_factor) #convert so set target is in degrees
 
-        self.carriage = Stepper()
+
         self.carriage.setDeviceSerialNumber(carriage_SN)
         self.carriage.openWaitForAttachment(5000)
-        self.carriage.setAcceleration(50000)
+        self.carriage.setAcceleration(10000)
         self.carriage.setRescaleFactor(head_factor)
 
-        self.head = Stepper()
+
         self.head.setDeviceSerialNumber(head_SN)
         self.head.openWaitForAttachment(5000)
         self.head.setAcceleration(4800)
         self.head.setRescaleFactor(head_factor)
 
 
+
+
     def parameter_calculation(self,
                               alpha_desired:float = 55,
                               radius = 1.985/2,
                               fiber_thickness_hoop = .152,
-                              linear_velocity_hoop = .2,
+                              linear_velocity_hoop = .02,
                               travel_distance = 15.5,
                               fiber_thickness_helical = .16,
-                              linear_velocity_helical=1.6
+                              linear_velocity_helical=.05
                               ):
         self.travel_distance = travel_distance
         self.linear_velocity_hoop = linear_velocity_hoop
+        self.linear_velocity_helical = linear_velocity_helical
         t = fiber_thickness_hoop/linear_velocity_hoop
         self.angular_velocity = 360/t
+        print('angular velocity:', self.angular_velocity)
         self.fiber_thickness_hoop = fiber_thickness_hoop
         self.fiber_thickness_helical = fiber_thickness_helical
 
@@ -62,7 +70,7 @@ class winder:
 
         offset_fudge_factor = 1# percent multiplier for offset angle
         head_angle_length = .25 #in length that the head turns during
-
+        self.head_angle_length = head_angle_length
         r = radius
         B = fiber_thickness_helical
         D = 2*r
@@ -98,16 +106,17 @@ class winder:
         if self.position == 0:
             self.carriage.setVelocityLimit(self.linear_velocity_helical)
             self.mandrel.setVelocityLimit(self.W_mand)
-            print(self.N)
+            print("Total Iterations Helical Forwards:", self.N)
             for i in range(self.N):
 
-                print(i)
+                temp_string = 'Iter:' + str(i) + '/' + str(self.N)
+                print(temp_string)
 
                 #Helical Path forwards
                 self.head.setTargetPosition(self.head_F)
                 self.head.setEngaged(True)
 
-                self.arriage.setTargetPosition(self.travel_distance)
+                self.carriage.setTargetPosition(self.travel_distance)
                 self.mandrel.setTargetPosition(self.mandrel.getTargetPosition()-self.Total_angle)
 
                 self.head.setEngaged(True)
@@ -154,32 +163,37 @@ class winder:
                     time.sleep(.5)
 
                 # move head to helical angle
-                self.head.setVelocityLimit(abs(self.head_B)/(self.head_angle_length/L))
+                self.head.setVelocityLimit(abs(self.head_B)/(self.head_angle_length/self.linear_velocity_helical))
                 self.head.setTargetPosition(self.head_F)
 
             self.position = 1
+            print("Helical Forwards End")
         else:
             self.carriage.setVelocityLimit(self.linear_velocity_helical)
             self.mandrel.setVelocityLimit(self.W_mand)
-            print("Total Iterations:", self.N)
+            print("Total Iterations Helical Backwards:", self.N)
             for i in range(self.N):
 
-                temp_string = 'Iter:' + i + '/' + self.N
+                temp_string = 'Iter:' + str(i) + '/' + str(self.N)
                 print(temp_string)
 
                 # move head to helical angle
                 self.head.setVelocityLimit(abs(self.head_B)/(self.head_angle_length/self.linear_velocity_helical))
                 self.head.setTargetPosition(self.head_B)
+                print('move head to helical angle 182')
 
-                #return on helical path
+                # return on helical path
                 self.carriage.setTargetPosition(0)
-                self.mandrel.setTargetPosition(mandrel.getTargetPosition()-Total_angle)
+                self.mandrel.setTargetPosition(self.mandrel.getTargetPosition()-self.Total_angle)
+
 
                 self.head.setEngaged(True)
                 self.mandrel.setEngaged(True)
                 self.carriage.setEngaged(True)
+                print('return on helical path 192')
 
                 while (self.mandrel.getIsMoving()):
+                    print('mandrel moving 195')
                     time.sleep(.5)
 
                 #turn head while tapering
@@ -190,26 +204,31 @@ class winder:
                 self.mandrel.setEngaged(True)
                 self.head.setEngaged(True)
 
+                print('turn head while tapering 206')
+
                 while (self.mandrel.getIsMoving()):
+                    print('mandrel moving 209')
                     time.sleep(.5)
 
                 # move head to helical angle
-                self.head.setVelocityLimit(abs(head_B)/(head_angle_length/L))
-                self.head.setTargetPosition(head_F)
+                self.head.setVelocityLimit(abs(self.head_B)/(self.head_angle_length/self.linear_velocity_helical))
+                self.head.setTargetPosition(self.head_F)
 
                 #Helical Path forwards
                 self.head.setTargetPosition(self.head_F)
                 self.head.setEngaged(True)
+                print('Helical Path forwards 219')
 
-                self.carriage.setTargetPosition(distance)
-                self.mandrel.setTargetPosition(mandrel.getTargetPosition()-Total_angle)
+                self.carriage.setTargetPosition(self.travel_distance)
+                self.mandrel.setTargetPosition(self.mandrel.getTargetPosition()-self.Total_angle)
 
                 self.head.setEngaged(True)
                 self.mandrel.setEngaged(True)
                 self.carriage.setEngaged(True)
 
                 while (self.mandrel.getIsMoving()):
-                    self.time.sleep(.5)
+                    print('229 mandrel moving')
+                    time.sleep(.5)
 
                 #taper
                 self.head.setVelocityLimit(self.W_head)
@@ -223,6 +242,7 @@ class winder:
                     time.sleep(.5)
 
             self.position = 0
+            print("Helical Backwards Ends")
 
 
     def part_size(radius, length):
@@ -232,6 +252,7 @@ class winder:
 
     def hoop(self):
         if self.position == 0:
+            print('Hoop Forward Start')
 
             self.carriage.setVelocityLimit(self.linear_velocity_hoop)
             self.mandrel.setVelocityLimit(self.angular_velocity)
@@ -245,8 +266,9 @@ class winder:
             self.carriage.setEngaged(True)
 
             self.position = 1
-
+            print('Hoop Forward End')
         else:
+            print('Hoop Backward Start')
             self.carriage.setVelocityLimit(self.linear_velocity)
             self.mandrel.setVelocityLimit(self.angular_velocity)
 
@@ -259,7 +281,7 @@ class winder:
             self.carriage.setEngaged(True)
 
             self.position = 0
-
+            print('Hoop Backward End')
 
     def tape_winding(self):
         self.mandrel.setTargetPosition(200000)

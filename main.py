@@ -50,14 +50,6 @@ class Ui(QtWidgets.QMainWindow):
         self.checkBox_Carriage_Dir.stateChanged.connect(self.ReverseCarriage)
         self.checkBox_Head_Dir.stateChanged.connect(self.ReverseHead)
 
-        #change in dist moved or rescale factor
-        self.doubleSpinBox_DM_Mandrel.valueChanged.connect(self.DM_changed)
-        self.doubleSpinBox_DM_Carriage.valueChanged.connect(self.DM_changed)
-        self.doubleSpinBox_DM_Head.valueChanged.connect(self.DM_changed)
-
-        self.doubleSpinBox_RF_Mandrel.valueChanged.connect(self.RF_changed)
-        self.doubleSpinBox_RF_Carriage.valueChanged.connect(self.RF_changed)
-        self.doubleSpinBox_RF_Head.valueChanged.connect(self.RF_changed)
 
         #disable buttons that require USB connection
         enabled = False
@@ -104,6 +96,14 @@ class Ui(QtWidgets.QMainWindow):
         self.doubleSpinBox_RF_Carriage.setValue(self.Xwinder.RF_Carriage)
         self.doubleSpinBox_RF_Head.setValue(self.Xwinder.RF_Head)
 
+        #change in dist moved or rescale factor
+        self.doubleSpinBox_DM_Mandrel.valueChanged.connect(self.DM_changed)
+        self.doubleSpinBox_DM_Carriage.valueChanged.connect(self.DM_changed)
+        self.doubleSpinBox_DM_Head.valueChanged.connect(self.DM_changed)
+
+        self.doubleSpinBox_RF_Mandrel.valueChanged.connect(self.RF_changed)
+        self.doubleSpinBox_RF_Carriage.valueChanged.connect(self.RF_changed)
+        self.doubleSpinBox_RF_Head.valueChanged.connect(self.RF_changed)
 
         #set up shortcut to enable using the Del key to delete items in the list of layers
         shortcut = QKeySequence('Del')
@@ -113,7 +113,10 @@ class Ui(QtWidgets.QMainWindow):
 
     def ConnectFunc(self):
         try:
-            self.Xwinder.connect()
+            self.Xwinder.connect(
+                 mandrel_SN=615813, mandrel_factor=self.Xwinder.RF_Mandrel,
+                 carriage_SN=615519, carriage_factor=self.Xwinder.RF_Carriage,
+                 head_SN=616004, head_factor=self.Xwinder.RF_Head)
         except:
             raise Exception('Could not connect to all USB devices')
         #enable buttons that require USB connection
@@ -141,10 +144,10 @@ class Ui(QtWidgets.QMainWindow):
                               alpha_desired = self.doubleSpinBox_Alpha.value(),
                               radius = self.doubleSpinBox_Radius.value(),
                               fiber_thickness_hoop = self.doubleSpinBox_FiberWidthHoop.value(),
-                              linear_velocity_hoop = self.doubleSpinBox_LinearVelocityHoop.value(),
+                              linear_velocity_hoop = .8,
                               travel_distance = self.doubleSpinBox_Length.value(),
                               fiber_thickness_helical = self.doubleSpinBox_FiberWidthHelical.value(),
-                              linear_velocity_helical = self.doubleSpinBox_LinearVelocityHelical.value()
+                              linear_velocity_helical = .02
                               )
 
 
@@ -167,14 +170,16 @@ class Ui(QtWidgets.QMainWindow):
         layer_list = [self.listWidget.item(x).text() for x in range(self.listWidget.count())]
         layer_list.reverse()
 
-        print(layer_list)
+        print('Winding Started')
+
         for layer in layer_list:
+            print('Starting Layer Type:', layer)
             if layer == 'Hoop':
-                print('hoop')
                 self.Xwinder.hoop()
             elif layer == 'Helical':
-                print('helical')
                 self.Xwinder.helical()
+
+        print('Winding Ended')
 
 
     def StopFunc(self):
@@ -192,24 +197,34 @@ class Ui(QtWidgets.QMainWindow):
 
 
     def MandrelPFunc(self):
-        self.Xwinder.mandrel.setTargetPosition(self.Xwinder.mandrel.getPosition()+100)
+        print(self.Xwinder.RF_Mandrel)
+        dist = self.Xwinder.mandrel.getPosition()
+        print(dist)
+        self.Xwinder.mandrel.setTargetPosition(dist+90)
+        self.Xwinder.mandrel.setEngaged(True)
     def MandrelNFunc(self):
-        self.Xwinder.mandrel.setTargetPosition(self.Xwinder.mandrel.getPosition()-100)
+        self.Xwinder.mandrel.setTargetPosition(self.Xwinder.mandrel.getPosition()-90)
+        self.Xwinder.mandrel.setEngaged(True)
 
     def CarriagePFunc(self):
-        self.Xwinder.carriage.setTargetPosition(self.Xwinder.carriage.getPosition()+100)
+        print('carriage P')
+        self.Xwinder.carriage.setTargetPosition(self.Xwinder.carriage.getPosition()+1)
+        self.Xwinder.carriage.setEngaged(True)
     def CarriageNFunc(self):
-        self.Xwinder.carriage.setTargetPosition(self.Xwinder.carriage.getPosition()-100)
+        self.Xwinder.carriage.setTargetPosition(self.Xwinder.carriage.getPosition()-1)
+        self.Xwinder.carriage.setEngaged(True)
 
     def HeadPFunc(self):
-        self.Xwinder.head.setTargetPosition(self.Xwinder.head.getPosition()+100)
+        self.Xwinder.head.setTargetPosition(self.Xwinder.head.getPosition()+90)
+        self.Xwinder.head.setEngaged(True)
     def HeadNFunc(self):
-        self.Xwinder.head.setTargetPosition(self.Xwinder.head.getPosition()-100)
+        self.Xwinder.head.setTargetPosition(self.Xwinder.head.getPosition()-90)
+        self.Xwinder.head.setEngaged(True)
 
     def Mv100degs(self):
 
         if self.checkBox_Mandrel.isChecked():
-            self.Xwinder.mandrel.setRescaleFactor(.1125)
+            self.Xwinder.carriage.setRescaleFactor(.1125)
             self.Xwinder.mandrel.setTargetPosition(self.Xwinder.mandrel.getPosition()+100)
             self.Xwinder.Mv100degs += 100
             self.label_DegsMoved.setText(str(self.Xwinder.Mv100degs))
@@ -229,32 +244,37 @@ class Ui(QtWidgets.QMainWindow):
     def DM_changed(self):
         #calculate the rescale factor one the use enters a distance moved then reset the total moved distance
         if self.doubleSpinBox_DM_Mandrel.value() != 0:
-            self.Xwinder.RF_Mandrel = self.Xwinder.Mv100degs_Total / self.doubleSpinBox_DM_Mandrel.value()
+
+            self.Xwinder.RF_Mandrel = .1125*(self.doubleSpinBox_DM_Mandrel.value()/self.Xwinder.Mv100degs)
             self.doubleSpinBox_RF_Mandrel.setValue(self.Xwinder.RF_Mandrel)
-            self.Xwinder.Mv100degs_Total = 0
+            self.Xwinder.mandrel.setRescaleFactor(self.Xwinder.RF_Mandrel)
 
         if self.doubleSpinBox_DM_Carriage.value() != 0:
-            self.Xwinder.RF_Carriage = self.Xwinder.Mv100degs_Total / self.doubleSpinBox_DM_Carriage.value()
+            self.Xwinder.RF_Carriage = .1125*(self.doubleSpinBox_DM_Carriage.value()/self.Xwinder.Mv100degs)
             self.doubleSpinBox_RF_Carriage.setValue(self.Xwinder.RF_Carriage)
-            self.Xwinder.Mv100degs_Total = 0
+            self.Xwinder.carriage.setRescaleFactor(self.Xwinder.RF_Carriage)
+
 
         if self.doubleSpinBox_DM_Head.value() != 0:
-            self.Xwinder.RF_Head = self.Xwinder.Mv100degs_Total / self.doubleSpinBox_DM_Head.value()
+            self.Xwinder.RF_Head = .1125*(self.doubleSpinBox_DM_Head.value()/self.Xwinder.Mv100degs)
             self.doubleSpinBox_RF_Head.setValue(self.Xwinder.RF_Head)
-            self.Xwinder.Mv100degs_Total = 0
+            self.Xwinder.head.setRescaleFactor(self.Xwinder.RF_Head)
+
 
     def RF_changed(self):
         #set rescale factors if they are entered by the user
         print('rf changed')
         if self.doubleSpinBox_RF_Mandrel.value() != 0:
             self.Xwinder.RF_Mandrel = self.doubleSpinBox_RF_Mandrel.value()
-            print(self.Xwinder.RF_Mandrel)
+            self.Xwinder.mandrel.setRescaleFactor(self.Xwinder.RF_Mandrel)
 
         if self.doubleSpinBox_RF_Carriage.value() != 0:
             self.Xwinder.RF_Carriage = self.doubleSpinBox_RF_Carriage.value()
+            self.Xwinder.carriage.setRescaleFactor(self.Xwinder.RF_Carriage)
 
         if self.doubleSpinBox_RF_Head.value() != 0:
             self.Xwinder.RF_Head = self.doubleSpinBox_RF_Head.value()
+            self.Xwinder.head.setRescaleFactor(self.Xwinder.RF_Head)
 
     def ResetTotal(self):
         self.Xwinder.Mv100degs = 0
@@ -263,17 +283,25 @@ class Ui(QtWidgets.QMainWindow):
     def ReverseMandrel(self):
         self.Xwinder.RF_Mandrel =self.Xwinder.RF_Mandrel * -1
         self.doubleSpinBox_RF_Mandrel.setValue(self.Xwinder.RF_Mandrel)
+        self.Xwinder.mandrel.setRescaleFactor(self.Xwinder.RF_Mandrel)
+
 
     def ReverseCarriage(self):
         self.Xwinder.RF_Carriage *= -1
         self.doubleSpinBox_RF_Carriage.setValue(self.Xwinder.RF_Carriage)
+        self.Xwinder.carriage.setRescaleFactor(self.Xwinder.RF_Carriage)
 
     def ReverseHead(self):
         self.Xwinder.RF_Head *= -1
         self.doubleSpinBox_RF_Head.setValue(self.Xwinder.RF_Head)
+        self.Xwinder.head.setRescaleFactor(self.Xwinder.RF_Head)
 
 
     def closeEvent(self, event):
+        self.Xwinder.mandrel = None
+        self.Xwinder.carriage = None
+        self.Xwinder.head = None
+
         with open(f'test.pickle', 'wb') as file:
             pickle.dump(self.Xwinder, file)
 
